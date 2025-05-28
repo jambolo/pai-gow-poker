@@ -21,9 +21,10 @@ idToRank = [
   rules.STRAIGHT_FLUSH    # 9
 ]
 
-# Returns a hand sorted by descending rank only
+# Sorts the hand by descending rank only
 sortByRank = (hand) ->
   hand.sort((a, b) -> rules.rank(b) - rules.rank(a))
+  return
 
 read_line = (line) ->
   parts = line.split(',').map(Number)
@@ -45,10 +46,11 @@ console.log "Testing classifier with", inputName
 # Read the file and test the classifier for each line
 fs.readFile inputName, 'utf8', (err, data) ->
   throw err if err
+  numberOfFailures = 0
   lines = data.trim().split '\n'
   for line, idx in lines
     [hand, expected] = read_line(line)
-    hand = sortByRank hand
+    sortByRank hand
     symbols = hand.map(rules.cardSymbol)
 #    console.log hand
 #    console.log symbols
@@ -66,6 +68,7 @@ fs.readFile inputName, 'utf8', (err, data) ->
 #      ].join(' ')
 #    )
     if result.rank != expected
+      numberOfFailures += 1
       console.error "Failed at line #{idx+1}:",
         symbols.join(' '),
         "expected: #{rules.handRankName(expected)},",
@@ -78,4 +81,7 @@ fs.readFile inputName, 'utf8', (err, data) ->
 #      "=> Passed"
 #    )
 
-  console.log "All tests passed"
+  if numberOfFailures > 0
+    console.error "#{numberOfFailures} tests failed"
+  else
+    console.log "All tests passed"
