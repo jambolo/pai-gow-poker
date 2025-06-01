@@ -6,6 +6,8 @@ fs = require 'fs'
 assert = require 'assert'
 classifier = require './classifier'
 rules = require './rules'
+yargs = require 'yargs'
+
 
 # Map ids to rules constants as described
 idToRank = [
@@ -21,9 +23,32 @@ idToRank = [
   rules.STRAIGHT_FLUSH    # 9
 ]
 
-inputName = 'data/poker-hand-testing.csv'
-outputName = 'data/poker-hand-testing-with-joker.csv'
+DEFAULT_INPUT_PATH = 'data/poker-hand-testing.csv'
+DEFAULT_OUTPUT_PATH = 'data/poker-hand-testing-with-joker.csv'
 
+# Parse command line arguments
+args = yargs(process.argv.slice(2))
+  .usage(
+    '$0 [input] [--output <path>]',
+    'Generates additional test cases that include a joker from the input test file',
+    (args) ->
+      args
+        .positional 'input', {
+          type: 'string'
+          describe: 'Test cases input file'
+          default: DEFAULT_INPUT_PATH
+        }
+  )
+  .option 'output', {
+    alias: 'o',
+    describe: 'Output path for test cases with a joker',
+    default: DEFAULT_OUTPUT_PATH
+  }
+  .help()
+  .version()
+  .argv
+
+# If the input file is specified, then use it
 # Sorts the hand by descending rank only
 sortByRank = (hand) ->
   hand.sort((a, b) -> rules.rank(b) - rules.rank(a))
@@ -46,7 +71,7 @@ removeDuplicateRanks = (hand) ->
 # The hand is assumed to be sorted by rank
 collateSuits = (hand) ->
   # The hand is assumed to not contain a joker
-  throw new Error("collateSuits() called with a joker.") if hand[0] == rules.JOKER
+  throw new Error('collateSuits() called with a joker.') if hand[0] == rules.JOKER
 
   suits = [[], [], [], []]
   for card in hand
@@ -58,9 +83,9 @@ collateSuits = (hand) ->
 # The hand is assumed to be sorted and contain a joker, so the joker is always the first card
 isFlushWithJoker = (hand) ->
   # The hand is assumed to contain at least 5 cards
-  throw new Error("isFlushWithJoker() called with less than 5 cards.") if hand.length < 5
+  throw new Error('isFlushWithJoker() called with less than 5 cards.') if hand.length < 5
   # If the hand does not contain a joker, then error
-  throw new Error("isFlushWithJoker() called with no joker.") if hand[0] != rules.JOKER
+  throw new Error('isFlushWithJoker() called with no joker.') if hand[0] != rules.JOKER
 
   # Group cards (except the joker) by suit
   suits = collateSuits(hand[1...])
@@ -75,9 +100,9 @@ isFlushWithJoker = (hand) ->
 # The hand is assumed to be sorted and contain a joker, so the joker is always the first card
 isStraightWithJoker = (hand) ->
   # The hand is assumed to contain at least 5 cards
-  throw new Error("isStraightWithJoker() called with less than 5 cards.") if hand.length < 5
+  throw new Error('isStraightWithJoker() called with less than 5 cards.') if hand.length < 5
   # The hand is assumed to be sorted and contain a joker
-  throw new Error("isStraightWithJoker() called with no joker.") if hand[0] != rules.JOKER
+  throw new Error('isStraightWithJoker() called with no joker.') if hand[0] != rules.JOKER
 
   # Remove the joker and duplicated ranks from the hand
   deduped = removeDuplicateRanks(hand[1...])
@@ -99,9 +124,9 @@ isStraightWithJoker = (hand) ->
 # Returns true if the hand is a straight flush with a joker
 isStraightFlushWithJoker = (hand) ->
   # The hand is assumed to contain at least 5 cards
-  throw new Error("isStraightFlushWithJoker() called with less than 5 cards.") if hand.length < 5
+  throw new Error('isStraightFlushWithJoker() called with less than 5 cards.') if hand.length < 5
   # The hand is assumed to be sorted and contain a joker
-  throw new Error("isStraightFlushWithJoker() called with no joker.") if hand[0] != rules.JOKER
+  throw new Error('isStraightFlushWithJoker() called with no joker.') if hand[0] != rules.JOKER
 
   # Group cards (except the joker) by suit
   suits = collateSuits(hand[1...])
@@ -198,7 +223,7 @@ read_line = (line) ->
     suit = parts[i * 2] - 1 # Suits are 1-based in the data. Also, the actual suit is irrelevant for the test
     rank = parts[i * 2 + 1]
     if rank == 1 then rank = rules.ACE
-#      console.log "suit: #{suit}, rank: #{rank}"
+#      console.log "suit: #{suit}, rank: #{rank}""
     hand.push rules.index(rank, suit)
   expected = idToRank[parts[10]]
   return [hand, expected]
@@ -206,16 +231,18 @@ read_line = (line) ->
 # Flattens an array of arrays into a single array
 flatten = (aOfA) -> [].concat.apply([], aOfA)
 
-console.log "Generating test cases with a joker from", inputName
+console.log 'Generating test cases with a joker from', args.input
+
+# Main starts here
 
 # Read the file and process each line
-fs.readFile 'data/poker-hand-testing.csv', 'utf8', (err, data) ->
+fs.readFile args.input, 'utf8', (err, data) ->
   throw err if err
   output = []
   lines = data.trim().split '\n'
   for line, idx in lines
     [hand, expected] = read_line(line)
-#    console.log "#{idx + 1}: #{hand.map(rules.cardSymbol).join(' ')} => #{rules.handRankName(expected)}"
+#    console.log "#{idx + 1}: #{hand.map(rules.cardSymbol).join(' ')} => #{rules.handRankName(expected)}""
     switch expected
       when rules.STRAIGHT
         hand = replaceStraightWithJoker(hand)
@@ -247,8 +274,8 @@ fs.readFile 'data/poker-hand-testing.csv', 'utf8', (err, data) ->
 
   # Write the output to a file in the same format as the input
   fs.writeFile(
-    outputName,
+    args.output,
     outputLines.map((o) -> o.join(',')).join('\n'),
     (err) -> throw err if err
   )
-  console.log "Generated #{output.length} test cases written to", outputName
+  console.log "Generated #{output.length} test cases written to", args.output

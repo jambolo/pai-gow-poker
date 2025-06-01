@@ -9,5 +9,8 @@
   "keywords": [],
   "author": "John Bolton <jambolo@users.noreply.github.com> (https://jambolo.github.io)",
   "license": "MIT",
-  "packageManager": "pnpm@10.10.0"
+  "packageManager": "pnpm@10.10.0",
+  "dependencies": {
+    "yargs": "^18.0.0"
+  }
 }
