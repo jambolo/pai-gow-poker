@@ -84,9 +84,12 @@ FLUSH = 5
 FULL_HOUSE = 6
 QUADS = 7
 STRAIGHT_FLUSH = 8
-# Note: Royal flush is a just a kind of straight flush so it is not included here
-NUMBER_OF_HANDS = 9
+ROYAL_FLUSH = 9 # Royal Flush is here because everyone considers it a separate hand rank, but I don't use it.
+FIVE_OF_A_KIND = 10
 
+NUMBER_OF_HANDS = 11 # Number of different hand ranks
+
+# Names of hand ranks
 HAND_RANK_NAMES = [
   "High Card"
   "Pair"
@@ -97,6 +100,8 @@ HAND_RANK_NAMES = [
   "Full House"
   "Quads"
   "Straight Flush"
+  "Royal Flush"
+  "Five of a Kind"
 ]
 
 # Returns the name of a suit
@@ -121,7 +126,6 @@ rankName = (rank) ->
 rankSymbol = (rank) ->
   if rank < LOW_ACE or (rank > ACE and rank isnt JOKER)
     throw new Error "Invalid rank #{rank}"
-#  console.log "rankSymbol: rank=#{rank}, JOKER=#{JOKER}, LOW_ACE=#{LOW_ACE}"
   if rank is JOKER then JOKER_SYMBOL else CARD_RANK_SYMBOLS[rank]
 # Returns the name of a card
 cardName = (index) ->
@@ -133,7 +137,6 @@ cardName = (index) ->
 cardSymbol = (index) ->
   if index < 0 or index > JOKER
     throw new Error "Invalid card #{index}"
-#  console.log "cardSymbol: index=#{index}, rank=#{rank(index)}, suit=#{suit(index)}"
   if index is JOKER then JOKER_SYMBOL else "#{rankSymbol(rank(index))}#{suitSymbol(suit(index))}"
 
 # Returns the name of a hand rank
@@ -192,6 +195,7 @@ module.exports = {
   FULL_HOUSE
   QUADS
   STRAIGHT_FLUSH
+  FIVE_OF_A_KIND
   NUMBER_OF_HANDS
   CARD_RANK_NAMES
   JOKER_NAME
