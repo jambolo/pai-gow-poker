@@ -1,7 +1,58 @@
 rules = require './rules'
 
+# Enumerates a poker hand.
+#
+# The enumeration is used to compare hands and order them by value. The better hand has a higher enumeration value. The
+# enumeration is based on the rank of the hand and the ranks of the individual cards in the hand. The enumeration is
+# unique to each set of hands with the same value, but is not sequential.
+#
+# The enumeration is computed as follows:
+#   1. First, the hand is ordered by the cards that make the hand followed by the remainder. Each part is sorted
+#      separately by descending rank. Jokers are given the rank of the card that they represent.
+#   2. A base value is computed as the hand rank times 16^5.
+#   3. The value of the individual cards in the hand is computed as the sum of the ranks of the cards times 16^i,
+#      where i is 4, 3, 2, 1, 0. For hands with fewer than 5 cards, the missing cards are given a rank of 0.
+#   4. The value of the hand is the sum of the base value and the value of the individual cards.
+#
+# The highest possible value for a five-card hand is 11464430, which is five aces with the cards Joker, A, A, A, A.
+# The lowest possible value for a five-card hand is 480306, which is a high card with the cards 7, 5, 4, 3, and 2.
+# The lowest possible value for a two-card hand is 204800, which is a 3, 2.
+enumerateHand = (rank, hand, remainder) ->
+  throw new Error "hand must be an array" unless Array.isArray hand
+  throw new Error "Hand must have 1 to 5 cards" unless 1 <= hand.length <= 5
+  throw new Error "Total number of cards must be <= 5" unless 1 <= (hand.length + remainder.length) <= 5
+
+  # If the hand contains a joker, replace it with the card it represents. Note that for enumeration purposes, the
+  # suit irrelevant.
+  hand = replaceJoker hand, rank
+
+  # Include the value of the hand's rank
+  value = rank
+
+  # Include the values of the cards in the hand and the remainder
+  for c in hand
+    value = value * 16 + rules.rank(c)
+  for c in remainder
+    value = value * 16 + rules.rank(c)
+
+  # If the hand is less than 5 cards, add the missing cards with a rank of 0
+  missing = 5 - (hand.length + remainder.length)
+  value = value * Math.pow(16, missing)
+
+  return value
+
 # Returns the best hand from a given set of cards along with its rank
+# Assumes hand is sorted by descending rank
+# The returned hand is sorted by descending rank (joker is first) with the following exceptions:
+#
+#   - A low-ace straight is returned in the order 5, 4, 3, 2, A. A joker is in the position that makes the straight.
+#   - The joker in a straight is in the position making the straight.
+#   - The joker in a flush is in the position corresponding to its highest possible rank.
+#   - A full house has the sorted set followed by the sorted pair.
 bestHand = (hand) ->
+  throw new Error "hand must be an array" unless Array.isArray hand
+  throw new Error "Hand is not sorted by descending rank" unless isSorted hand
+
   tests = [
     { detector: bestFiveOfAKind,   rank: rules.FIVE_OF_A_KIND }
     { detector: bestStraightFlush, rank: rules.STRAIGHT_FLUSH }
@@ -18,6 +69,7 @@ bestHand = (hand) ->
   for { detector, rank } in tests
     cards = detector hand
     if cards?
+      e = enumerateHand(rank, cards, hand.filter (c) -> not cards.includes c)
       return { rank, cards }
 
   throw new Error "No ranking found"
@@ -113,11 +165,11 @@ bestStraight = (hand) ->
 
   # Otherwise, the joker is not relevant
   i = findStraight deduped
-  return deduped[start...start + 5] if i >= 0
+  return deduped[i...i + 5] if i >= 0
 
   # If no normal straight has been found, check for a low-ace straight (5, 4, 3, 2, A)
-  start = extractLowAceStraight deduped
-  return deduped[start...start + 5] if start?
+  lowAceStraight = extractLowAceStraight deduped
+  return lowAceStraight if lowAceStraight?
 
   return null
 
@@ -205,6 +257,9 @@ bestFiveOfAKind = (hand) ->
   return hand[0...5] if hand[0] == rules.JOKER and rules.rank(hand[4]) == rules.ACE
 
   return null
+
+# Returns true if the hand is sorted by descending rank
+isSorted = (hand) -> hand.every((c, i) -> i == 0 or rules.rank(c) <= rules.rank(hand[i - 1]))
 
 # Sorts the hand by descending rank then by ascending suit
 sortByRankThenSuit = (hand) ->
@@ -296,15 +351,49 @@ arraysEqual = (a, b) ->
 # Returns a hand with the card of a given rank replaced with a joker
 replaceRankWithJoker = (hand, r) -> hand.slice().map (card) -> if rules.rank(card) == r then rules.JOKER else card
 
+# Returns the index of the joker in a hand, or -1 if no joker is found
+findTheJoker = (hand) ->
+  for i in [0...hand.length]
+    return i if hand[i] == rules.JOKER
+  return -1
+
+replaceJoker = (hand, rank) ->
+  hand = hand.slice() # Make a copy of the hand to avoid modifying the original
+  
+  # Find the joker. If there is no joker, return the hand as is.
+  j = findTheJoker hand
+  return hand if j < 0
+
+  # Replace the joker with the card it represents. Note that for enumeration purposes, the suit
+  # is irrelevant.
+  switch rank
+    when rules.FIVE_OF_A_KIND
+      hand[j] = rules.index(rules.ACE, 0) # Joker is an ace
+    when rules.STRAIGHT_FLUSH, rules.STRAIGHT
+      if j > 0
+        r = rules.rank hand[j - 1]
+        hand[j] = rules.index(r - 1, 0) # Joker is next card in the straight
+      else
+        r = rules.rank hand[1]
+        hand[j] = rules.index(r + 1, 0) # Joker is first card in the straight
+    when rules.FLUSH
+      if j > 0
+        r = rules.rank hand[j - 1]
+        hand[j] = rules.index(r - 1, 0) # Joker is next card in the flush
+      else
+        hand[j] = rules.index(rules.ACE, 0) # Joker is an ace (suit is irrelevant)
+    when rules.QUADS, rules.SET, rules.TWO_PAIR, rules.PAIR, rules.HIGH_CARD
+      throw new Error "The first card in the hand must be a joker." unless j == 0
+      hand[j] = rules.index(rules.ACE, 0) # Joker is an ace
+    when rules.FULL_HOUSE
+      throw new Error "The first or fourth card in the hand must be a joker." unless j == 0 or j == 3
+      hand[j] = rules.index(rules.ACE, 0) # Joker is an ace
+    else
+      throw new Error "Unknown hand rank #{rank}"
+      
+  return hand
+
 module.exports = {
+  enumerateHand
   bestHand
-  bestHighCard
-  bestPair
-  bestTwoPair
-  bestSet
-  bestStraight
-  bestFlush
-  bestFullHouse
-  bestQuads
-  bestStraightFlush
 }

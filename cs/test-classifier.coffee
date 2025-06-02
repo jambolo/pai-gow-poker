@@ -52,7 +52,9 @@ fs.readFile inputName, 'utf8', (err, data) ->
     sortByRank hand
     symbols = hand.map rules.cardSymbol
     result = classifier.bestHand hand
+    resultSymbols = result.cards.map rules.cardSymbol
 
+    # Verify the rank
     assert.strictEqual(
       result.rank,
       expected,
@@ -60,7 +62,7 @@ fs.readFile inputName, 'utf8', (err, data) ->
         "Failed at line #{idx+1}:",
         symbols.join(' '),
         "expected: #{rules.handRankName(expected)},",
-        "got: #{rules.handRankName(result.rank)}"
+        "got: (#{resultSymbols.join(' ')}) as #{rules.handRankName(result.rank)}"
       ].join(' ')
     )
 #    if result.rank != expected
@@ -74,5 +76,36 @@ fs.readFile inputName, 'utf8', (err, data) ->
 #    console.error "#{numberOfFailures} tests failed"
 #  else
 #    console.log "All tests passed"
+
+  # Verify that returned hand is correct by repeating the test with it and making sure it returns the same result
+    hand = result.cards.slice()
+    sortByRank hand
+    again = classifier.bestHand hand
+    againSymbols = again.cards.map rules.cardSymbol
+
+    assert.strictEqual(
+      again.rank,
+      expected,
+      [
+        "Failed at line #{idx+1}:",
+        "#{resultSymbols.join(' ')} (from #{symbols.join(' ')})",
+        "expected: #{rules.handRankName(expected)},",
+        "got: (#{againSymbols.join(' ')}) as #{rules.handRankName(again.rank)}"
+      ].join(' ')
+    )
+
+    assert.deepStrictEqual(
+      result.cards,
+      again.cards,
+      [
+        "Failed at line #{idx+1}:",
+        "#{resultSymbols.join(' ')} (from #{symbols.join(' ')})",
+        "expected reclassification to return the same cards,",
+        "but got: #{againSymbols.join(' ')},",
+      ].join(' ')
+    )
+
+
+
 
   console.log "All tests passed"
