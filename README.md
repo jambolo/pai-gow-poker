@@ -1,4 +1,4 @@
-# paigow
+# pai-gow-poker
 Various tools to analyze the game of Pai Gow Poker
 
 ### list-two-card-hands.coffee
