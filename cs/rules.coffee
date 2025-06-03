@@ -54,23 +54,23 @@ CARD_RANK_SYMBOLS = [
 JOKER_NAME = "Joker"
 JOKER_SYMBOL = "?"
 
-# Enumeration of card suits
-HEARTS = 0
+# Enumeration of card suits (in order of increasing value)
+CLUBS = 0
 DIAMONDS = 1
-CLUBS = 2
+HEARTS = 2
 SPADES = 3
 
 SUIT_NAMES = [
-  "Hearts"
-  "Diamonds"
   "Clubs"
+  "Diamonds"
+  "Hearts"
   "Spades"
 ]
 
 SUIT_SYMBOLS = [
-  "♥"
-  "♦"
   "♣"
+  "♦"
+  "♥"
   "♠"
 ]
 
@@ -106,73 +106,59 @@ HAND_RANK_NAMES = [
 
 # Returns the name of a suit
 suitName = (suit) ->
-  if suit < HEARTS or suit > SPADES
-    throw new Error "Invalid suit #{suit}"
+  throw new Error "Invalid suit #{suit}" if not (CLUBS <= suit <= SPADES)
   SUIT_NAMES[suit]
 
 # Returns the symbol of a suit
 suitSymbol = (suit) ->
-  if suit < HEARTS or suit > SPADES
-    throw new Error "Invalid suit #{suit}"
+  throw new Error "Invalid suit #{suit}" if not (CLUBS <= suit <= SPADES)
   SUIT_SYMBOLS[suit]
-  
+
 # Returns the name of a rank
 rankName = (rank) ->
-  if rank < LOW_ACE or (rank > ACE and rank isnt JOKER)
-    throw new Error "Invalid rank #{rank}"
+  throw new Error "Invalid rank #{rank}" if not (LOW_ACE <= rank <= ACE) and rank isnt JOKER
   if rank is JOKER then JOKER_NAME else CARD_RANK_NAMES[rank - LOW_ACE] # -1 because LOW_ACE is 1
 
 # Returns the symbol of a rank
 rankSymbol = (rank) ->
-  if rank < LOW_ACE or (rank > ACE and rank isnt JOKER)
-    throw new Error "Invalid rank #{rank}"
+  throw new Error "Invalid rank #{rank}" if not (LOW_ACE <= rank <= ACE) and rank isnt JOKER
   if rank is JOKER then JOKER_SYMBOL else CARD_RANK_SYMBOLS[rank]
 # Returns the name of a card
 cardName = (index) ->
-  if index < 0 or index > JOKER
-    throw new Error "Invalid card #{index}"
+  throw new Error "Invalid card #{index}" if not (0 <= index <= JOKER)
   if index is JOKER then JOKER_NAME else "#{rankName(rank(index))} of #{suitName(suit(index))}"
 
 # Returns the name of a card
 cardSymbol = (index) ->
-  if index < 0 or index > JOKER
-    throw new Error "Invalid card #{index}"
+  throw new Error "Invalid card #{index}" if not (0 <= index <= JOKER)
   if index is JOKER then JOKER_SYMBOL else "#{rankSymbol(rank(index))}#{suitSymbol(suit(index))}"
 
 # Returns the name of a hand rank
 handRankName = (rank) ->
-  if rank < HIGH_CARD or rank >= NUMBER_OF_HANDS
-    throw new Error "Invalid hand rank #{rank}"
+  throw new Error "Invalid hand rank #{rank}" if not (HIGH_CARD <= rank <= FIVE_OF_A_KIND)
   HAND_RANK_NAMES[rank]
 
 # Convert card rank and suit to a single index
 index = (rank, suit) ->
-  if rank < LOW_ACE or (rank > ACE and rank isnt JOKER)
-    throw new Error "Invalid rank #{rank}"
-  if suit < HEARTS or suit > SPADES
-    throw new Error "Invalid suit #{suit}"
+  throw new Error "Invalid rank #{rank}" if not (LOW_ACE <= rank <= ACE) and rank isnt JOKER
+  throw new Error "Invalid suit #{suit}" if not (CLUBS <= suit <= SPADES)
   if rank == LOW_ACE
     rank = ACE # Treat low ace as high ace for index calculation
   if rank is JOKER then JOKER else (rank - 2) * 4 + suit
 
 # Convert card to rank and suit
 rankSuit = (index) ->
-  if index < 0 or index > JOKER
-    throw new Error "Invalid card #{index}"
-  r = rank index
-  s = suit index
-  [r, s]
+  throw new Error "Invalid card #{index}" if not (0 <= index <= JOKER)
+  [rank(index), suit(index)]
 
 # Returns the rank of a card
 rank = (index) ->
-  if index < 0 or index > JOKER
-    throw new Error "Invalid card #{index}"
+  throw new Error "Invalid card #{index}" if not (0 <= index <= JOKER)
   if index is JOKER then JOKER else Math.floor(index / 4) + 2 # + 2 because ranks start from 2 (2-10, J, Q, K, A)
 
 # Returns the suit of a card
 suit = (index) ->
-  if index < 0 or index > JOKER
-    throw new Error "Invalid card #{index}"
+  throw new Error "Invalid card #{index}" if not (0 <= index <= JOKER)
   index % 4
 
 module.exports = {
@@ -182,9 +168,9 @@ module.exports = {
   KING
   ACE
   JOKER
-  HEARTS
-  DIAMONDS
   CLUBS
+  DIAMONDS
+  HEARTS
   SPADES
   HIGH_CARD
   PAIR
