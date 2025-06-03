@@ -16,7 +16,8 @@ rules = require './rules'
 #
 # The highest possible value for a five-card hand is 11464430, which is five aces with the cards Joker, A, A, A, A.
 # The lowest possible value for a five-card hand is 480306, which is a high card with the cards 7, 5, 4, 3, and 2.
-# The lowest possible value for a two-card hand is 204800, which is a 3, 2.
+# The highest possible value for a two-card hand is 2023424, which is a A A.
+# The lowest possible value for a two-card hand is 204800, which is a 3 2.
 enumerateHand = (rank, hand, remainder) ->
   throw new Error "hand must be an array" unless Array.isArray hand
   throw new Error "Hand must have 1 to 5 cards" unless 1 <= hand.length <= 5
@@ -69,7 +70,6 @@ bestHand = (hand) ->
   for { detector, rank } in tests
     cards = detector hand
     if cards?
-      e = enumerateHand(rank, cards, hand.filter (c) -> not cards.includes c)
       return { rank, cards }
 
   throw new Error "No ranking found"
@@ -206,7 +206,7 @@ bestFullHouse = (hand) ->
   set = bestSet hand
   return null unless set?
 
-  remainingCards = hand.filter (card) -> not set.includes card
+  remainingCards = hand.filter (card) -> not (card in set)
   pair = bestPair remainingCards
   return set.concat(pair) if pair?
 

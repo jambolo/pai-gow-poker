@@ -1,4 +1,4 @@
-# generate-joker-hand-testing.coffee
+# generate-poker-hand-testing-with-joker.coffee
 #
 # Generates additional test cases for the classifier that include a joker. Test cases are derived from the file
 # data/poker-hand-testing.csv.
@@ -44,8 +44,6 @@ args = yargs(process.argv.slice 2)
     describe: 'Output path for test cases with a joker',
     default: DEFAULT_OUTPUT_PATH
   }
-  .help()
-  .version()
   .argv
 
 # If the input file is specified, then use it
@@ -101,13 +99,13 @@ isFlushWithJoker = (hand) ->
 # The hand is assumed to be sorted and contain a joker, so the joker is always the first card
 isStraightWithJoker = (hand) ->
   # The hand is assumed to be sorted and contain a joker
-  throw new Error('isStraightWithJoker() called with no joker.') if hand[0] != rules.JOKER
-
-  # A straight must contain at least 5 cards
-  return false if hand.length < 5
+  throw new Error 'isStraightWithJoker() called with no joker.' if hand[0] != rules.JOKER
 
   # Remove the joker and duplicated ranks from the hand
   deduped = removeDuplicateRanks hand[1...]
+
+  # A straight must contain at least 5 cards
+  return false if deduped.length < 5
 
   # Check for possible straights in the deduped hand
   for i in [0...deduped.length - 3]
