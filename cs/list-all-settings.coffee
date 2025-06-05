@@ -7,7 +7,7 @@ rules = require './rules'
 classifier = require './classifier'
 
 RANK_SYMBOLS = '23456789TJQKA'
-SUIT_SYMBOLS = 'CDHS'
+SUIT_SYMBOLS = 'cdhs'
 
 # Checks if a card input is valid
 isValidCard = (s) ->
@@ -23,8 +23,8 @@ argv = yargs(process.argv.slice 2)
         .positional 'cards', {
           type: 'string'
           describe: '''
-            List of 7 cards to set. Each is one of "23456789TJQKA" followed by one of "CDHS", or "X" for a joker.
-            For example, 2H 3D 4C 5S 6H 7D X
+            List of 7 cards to set. Each is one of "23456789TJQKA" followed by one of "cdhs", or "X" for a joker.
+            For example, 2h 3d 4c 5s 6h 7d X
           '''
         }
     ,
