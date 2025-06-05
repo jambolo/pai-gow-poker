@@ -12,5 +12,9 @@
   "packageManager": "pnpm@10.10.0",
   "dependencies": {
     "yargs": "^18.0.0"
+  },
+  "devDependencies": {
+    "coffeescript": "^2.7.0",
+    "mocha": "^11.5.0"
   }
 }
