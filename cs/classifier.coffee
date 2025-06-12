@@ -1,4 +1,9 @@
+# classifier.coffee
+#
+# Poker hand classifier module
+
 rules = require './rules'
+{ arraysEqual, isSortedByRank, removeDuplicatedRanks, sortByRank } = require './common'
 
 # Enumerates a poker hand.
 #
@@ -52,7 +57,7 @@ enumerateHand = (rank, hand, remainder) ->
 #   - A full house has the sorted set followed by the sorted pair.
 bestHand = (hand) ->
   throw new Error "hand must be an array" unless Array.isArray hand
-  throw new Error "Hand is not sorted by descending rank" unless isSorted hand
+  throw new Error "Hand is not sorted by descending rank" unless isSortedByRank hand
 
   tests = [
     { detector: bestFiveOfAKind,   rank: rules.FIVE_OF_A_KIND }
@@ -258,43 +263,6 @@ bestFiveOfAKind = (hand) ->
 
   return null
 
-# Returns true if the hand is sorted by descending rank
-isSorted = (hand) -> hand.every((c, i) -> i == 0 or rules.rank(c) <= rules.rank(hand[i - 1]))
-
-# Sorts the hand by descending rank then by ascending suit
-sortByRankThenSuit = (hand) ->
-  hand.sort (a, b) ->
-    rankA = rules.rank a
-    rankB = rules.rank b
-    return if rankA == rankB then rules.suit(a) - rules.suit(b) else rankB - rankA
-  return
-
-# Sorts the hand by ascending suit then by descending rank
-sortBySuitThenRank = (hand) ->
-  hand.sort (a, b) ->
-    suitA = rules.suit a
-    suitB = rules.suit b
-    return if suitA == suitB then rules.rank(b) - rules.rank(a) else suitA - suitB
-  return
-
-# Sorts the hand by descending rank only
-sortByRank = (hand) ->
-  hand.sort (a, b) -> rules.rank(b) - rules.rank(a)
-  return
-
-# Removes cards with duplicate ranks from a hand
-# Assumes hand is sorted by descending rank
-removeDuplicatedRanks = (hand) ->
-  deduped = []
-  lastRank = null
-  for card in hand
-    rank = rules.rank card
-    if rank != lastRank # Only add the card if its rank is different from the last added card
-      deduped.push card
-      lastRank = rank
-
-  return deduped
-
 # Returns the index of the first of n cards of the same rank (i.e. pair, set, quads, etc.), or -1 if not found.
 # Assumes hand is sorted by descending rank
 findNOfAKind = (hand, n) ->
@@ -340,13 +308,6 @@ collateBySuit = (hand) ->
     suit = rules.suit card
     collated[suit].push card
   return collated
-
-# Returns true if two arrays are equal
-arraysEqual = (a, b) ->
-  return false if a.length != b.length
-  for i in [0...a.length]
-    return false if a[i] != b[i]
-  return true
 
 # Returns a hand with the card of a given rank replaced with a joker
 replaceRankWithJoker = (hand, r) -> hand.slice().map (card) -> if rules.rank(card) == r then rules.JOKER else card

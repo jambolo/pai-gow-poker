@@ -6,6 +6,8 @@ fs = require 'fs'
 assert = require 'assert'
 classifier = require '../cs/classifier'
 rules = require '../cs/rules'
+{ sortByRank } = require '../cs/common'
+
 
 # Map ids to rules constants as described
 idToRank = [
@@ -21,11 +23,6 @@ idToRank = [
   rules.STRAIGHT_FLUSH    # 9
   rules.FIVE_OF_A_KIND   # 10
 ]
-
-# Sorts the hand by descending rank only
-sortByRank = (hand) ->
-  hand.sort((a, b) -> rules.rank(b) - rules.rank(a))
-  return
 
 read_line = (line) ->
   parts = line.split(',').map Number

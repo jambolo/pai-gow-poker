@@ -5,6 +5,7 @@
 yargs = require 'yargs'
 rules = require './rules'
 classifier = require './classifier'
+{ sortByRank } = require './common'
 
 RANK_SYMBOLS = '23456789TJQKA'
 SUIT_SYMBOLS = 'cdhs'
@@ -58,11 +59,6 @@ parseCard = (s) ->
   rank = RANK_SYMBOLS.indexOf(s[0]) + 2 # +2 because '2' is the lowest rank
   suit = SUIT_SYMBOLS.indexOf s[1]
   return rules.index rank, suit
-
-# Sorts a hand of cards by their rank in descending order
-sortByRank = (hand) ->
-  hand.sort (a, b) -> rules.rank(b) - rules.rank(a)
-  return
 
 # Analyzes a hand and returns the best hand rank, the cards in that hand, and its value
 analyzeHand = (cards) ->

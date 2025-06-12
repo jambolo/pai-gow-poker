@@ -6,6 +6,7 @@ fs = require 'fs'
 assert = require 'assert'
 classifier = require './classifier'
 rules = require './rules'
+{ sortByRank } = require './common'
 yargs = require 'yargs'
 
 # Map ids to rules constants as described
@@ -45,12 +46,6 @@ args = yargs(process.argv.slice 2)
     default: DEFAULT_OUTPUT_PATH
   }
   .argv
-
-# If the input file is specified, then use it
-# Sorts the hand by descending rank only
-sortByRank = (hand) ->
-  hand.sort (a, b) -> rules.rank(b) - rules.rank(a)
-  return
 
 # Returns an array with all duplicate ranks removed.
 # The cards are assumed to be sorted by rank
